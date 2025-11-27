@@ -1,0 +1,652 @@
+{
+  "name": "AI Automated Social Media Posting with n8n (human in the loop)",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c6e33a74-b9b0-463b-9616-20e89ca6ebf2",
+              "leftValue": "={{ $json.title }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        16
+      ],
+      "id": "ec5f53bc-534d-4cc3-9bc4-80c51f1b3cb4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        960,
+        16
+      ],
+      "id": "b526b7a4-8144-449c-8b13-9e536397f9e2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "=json",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": ".entry-content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        16
+      ],
+      "id": "91d1b4c6-ab24-4450-8cca-31ce15470299",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.body }}",
+        "options": {
+          "systemMessage": "You will be provided with an article. Your task is to carffully\nread and comprehend the content of the article. After anaTysing the\narticle, generate a concise summary of the key points and main\nideas discussed in the article. The summary should be informative,\nhelpfut, and to the point, with a maximum length of 35 words.\n\nWhen creating the summary, focus on the following aspects:\n\nIdentify the core message of the article.\n\nHighlight the most important facts, statistics, or examples that\nsupport the main points.\nIf applicable, briefly mention any significant conclusions or\nrecommendations made in the article.\n\nAvoid using unnecessary fluff or filler phrases, and do not include\nintroductory phrases like \"this video is about.\" Instead,\nconcentrate on directly communicating the essential information in\na clear and efficient manner.\n\nTo ensure your summary is effective, consider the following tips:\n\nUse concise and precise language to convey the key ideas.\n\nPrioritise information based on its relevance to the main message.\nEnsure that the summary can be easily understood by someone who\nhasn't read the article.\nRead through your summary to check for clarity, coherence, and\nadherence to the 35-word limit.\n\nRemember, your goal is to provide a comprehensive yet succinct\noverview of the article's content, enabling readers to quickly\ngrasp the core message and main takeaways. Do not repeat the title. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1408,
+        16
+      ],
+      "id": "19d085cc-7555-4223-8306-1e51ca1fc691",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        240
+      ],
+      "id": "9e8234d0-1d48-4983-b2ba-17f062b81e34",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bdqP5voNrqv4DJ6Z",
+          "name": "personal gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 100
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        240
+      ],
+      "id": "bd11f379-2198-4fd4-a83e-6c74ce20503c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c0dcf48d-d48d-472e-829f-fdc6edc8b349",
+              "name": "summary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "link",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "body",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        16
+      ],
+      "id": "b4ef6ca0-9b05-4513-b90f-a61e2ab7e8ec",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "8cf49ba1-c9db-4bef-861d-fae4b795e2fe",
+      "name": "Daily Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "rssFeedUrl",
+              "value": "https://blog.n8n.io/rss/",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "contentTheme",
+              "value": "<__PLACEHOLDER_VALUE__Content theme to filter articles (e.g., AI, automation, workflow)__>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "93787c39-bb88-4438-9460-8e711faf057e",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article Title: {{ $json.title }}\n\nArticle Summary: {{ $json.summary }}\n\nFull Content: {{ $json.body }}",
+        "options": {
+          "systemMessage": "=You are a content curator. Your task is to determine if an article is relevant to the theme: {{ $('Workflow Configuration').first().json.contentTheme }}.\n\nAnalyze the article and respond with ONLY one word:\n- \"RELEVANT\" if the article matches the theme\n- \"NOT_RELEVANT\" if it does not match\n\nBe strict in your evaluation. The article must clearly relate to the specified theme."
+        }
+      },
+      "id": "1eca0b6e-54b7-4c33-b36c-d073d7c7e893",
+      "name": "Check Article Relevance",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1984,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.output.toLowerCase() }}",
+              "rightValue": "relevant",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b718bbc5-40a6-40df-9c6f-ab89f4aebd74",
+      "name": "Is Relevant?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2336,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Article Title: {{ $('Edit Fields').item.json.title }}\n\nArticle Summary: {{ $('Edit Fields').item.json.summary }}\n\nArticle Link: {{ $('Edit Fields').item.json.link }}",
+        "options": {
+          "systemMessage": "You are a social media expert specializing in Twitter/X content.\n\nCreate an engaging tweet that:\n1. Captures attention with a strong hook\n2. Summarizes the key insight from the article\n3. Includes the article link\n4. Uses 1-2 relevant hashtags\n5. Is EXACTLY 280 characters or less\n\nIMPORTANT: Count characters carefully. The tweet MUST NOT exceed 280 characters including spaces, hashtags, and the link.\n\nReturn ONLY the tweet text, nothing else."
+        }
+      },
+      "id": "a7ef67dc-3d4e-48a9-8c88-518bb3153ff5",
+      "name": "Generate Tweet",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        2560,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "tweet",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "title",
+              "value": "={{ $('Edit Fields').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "link",
+              "value": "={{ $('Edit Fields').item.json.link }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b43ecafc-09fb-43f8-87ad-0738c5b43d6c",
+      "name": "Format Tweet Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2912,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "all-harsh-wallah"
+        },
+        "text": "=🚀 *New Tweet Ready for Approval*\n\n*Article:* {{ $json.title }}\n\n*Proposed Tweet:*\n{{ $json.tweet }}\n\n*Article Link:* {{ $json.link }}\n\n---\nTo approve, click the webhook link: {{ $('Approval Webhook').first().context.webhookUrl }}?approved=true&tweet={{ encodeURIComponent($json.tweet) }}\n\nTo reject, click: {{ $('Approval Webhook').first().context.webhookUrl }}?approved=false",
+        "otherOptions": {}
+      },
+      "id": "28877a6f-2d6a-4454-abdc-395ca9bb8a5f",
+      "name": "Send to Slack for Approval",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        3136,
+        16
+      ],
+      "webhookId": "ba32c2ff-9939-4cbb-8ecd-2308446f2723",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "7nzQbbbvhG3vhuc3",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "approval",
+        "options": {}
+      },
+      "id": "24ed4b8b-73d2-4865-8fd6-f20608b5c717",
+      "name": "Approval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        64,
+        432
+      ],
+      "webhookId": "bbfa0482-17ac-4254-9bd5-ee10155d8dad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.query.approved }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "048c9370-84d1-48a5-a343-be3a7c76f7ee",
+      "name": "Check Approval",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.query.tweet }}",
+        "additionalFields": {}
+      },
+      "id": "de30daee-f7ed-4c3f-a8ee-e510843852ad",
+      "name": "Post to Twitter",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        512,
+        336
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "PARrvzho7bUqS54J",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "=harsh-thakur-984679326",
+        "text": "={{ $json.query.tweet }}",
+        "additionalFields": {}
+      },
+      "id": "cd859820-f125-4253-a282-0cd5cc4b45f3",
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        512,
+        528
+      ],
+      "retryOnFail": false,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "BKcx4PSgbQ0W6dQ4",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Workflow Configuration').first().json.rssFeedUrl }}",
+        "options": {}
+      },
+      "id": "d53cf4a5-e9d2-4f05-a7b6-83bd8a67f41b",
+      "name": "Fetch RSS Feed",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        16
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Check Article Relevance",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Tweet",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Check Article Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Article Relevance": {
+      "main": [
+        [
+          {
+            "node": "Is Relevant?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Relevant?": {
+      "main": [
+        [
+          {
+            "node": "Generate Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Tweet": {
+      "main": [
+        [
+          {
+            "node": "Format Tweet Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Tweet Data": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Approval": {
+      "main": [
+        [
+          {
+            "node": "Post to Twitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "48195acc-b371-4bb6-bac6-4b221163dd63",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2a8abe7d74191cf6c9372ec2ed2cd6bba924bc7d26eafef80f07589865f49e8"
+  },
+  "id": "1aXEdqcBn3FL78J4",
+  "tags": []
+}
